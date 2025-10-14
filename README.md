@@ -308,6 +308,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - **AI Provider:** Groq for fast LLM inference
 - **Icons:** Emoji icons for clean UI
 - **Inspiration:** Modern healthcare technology trends
+- **CHAT GPT :** I used for generating  css styles
 
 ---
 
