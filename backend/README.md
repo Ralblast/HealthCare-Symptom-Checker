@@ -1,74 +1,74 @@
-# 🎨 Frontend - Healthcare Symptom Checker
+# 🔧 Backend - Healthcare Symptom Checker API
 
-> Modern React application with professional UI/UX
+> RESTful API server built with Express.js, MongoDB, and Groq AI
 
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Features](#features)
 - [Installation](#installation)
-- [Components](#components)
-- [Styling](#styling)
-- [API Integration](#api-integration)
+- [Configuration](#configuration)
+- [API Endpoints](#api-endpoints)
+- [Database Schema](#database-schema)
+- [Security](#security)
 - [Development](#development)
 
 ---
 
 ## 🌟 Overview
 
-React 18 frontend application providing an intuitive interface for AI-powered symptom analysis. Built with Vite for optimal development experience and performance.
+Express.js backend server providing AI-powered symptom analysis through a secure RESTful API. Integrates with Groq's Llama 3.3 model for intelligent medical reasoning.
 
-### User Flow
+### Architecture
 
 ```
-Landing Page
+Client Request
      ↓
-Symptom Input Form
+[Validation Middleware]
      ↓
-AI Processing (Loading)
+[Sanitization Middleware]
      ↓
-Clarification Questions
+[Route Handlers]
      ↓
-AI Analysis (Loading)
+[AI Service / Database]
      ↓
-Results Display
+[Response with Error Handling]
 ```
 
 ---
 
 ## ✨ Features
 
-- ✅ React 18 with Hooks
-- ✅ Vite for fast builds
-- ✅ Responsive design (mobile-first)
-- ✅ Custom CSS with variables
-- ✅ Loading states & error handling
+- ✅ RESTful API design
+- ✅ MongoDB integration with Mongoose ODM
+- ✅ Groq AI (Llama 3.3) integration
+- ✅ Input validation & sanitization
+- ✅ Rate limiting (100 req/15min)
+- ✅ Security headers (Helmet.js)
+- ✅ CORS configuration
+- ✅ Structured JSON logging
+- ✅ Error handling middleware
 - ✅ Request timeout handling
-- ✅ Accessibility (WCAG 2.1)
-- ✅ Emergency detection UI
-- ✅ Professional medical disclaimer
+- ✅ Retry logic for AI requests
 
 ---
 
 ## 🚀 Installation
 
 ```bash
-# Navigate to frontend directory
-cd frontend
+# Navigate to backend directory
+cd backend
 
 # Install dependencies
 npm install
 
-# Copy environment template (optional)
+# Copy environment template
 cp .env.example .env
+
+# Edit .env with your credentials
+nano .env
 
 # Start development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
 ---
@@ -77,146 +77,159 @@ npm run preview
 
 ### Environment Variables
 
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `GROQ_API_KEY` | Groq AI API key | Yes | `gsk_xxx...` |
+| `MONGODB_URI` | MongoDB connection string | Yes | `mongodb+srv://...` |
+| `PORT` | Server port | No | `3001` |
+| `NODE_ENV` | Environment | No | `development` |
+| `FRONTEND_URL` | CORS allowed origin | No | `http://localhost:5173` |
+
+### Example .env
+
 ```env
-# Optional - defaults to http://localhost:3001
-VITE_API_BASE_URL=http://localhost:3001
+GROQ_API_KEY=gsk_your_key_here
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/healthcare_db
+PORT=3001
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Vite Config
+---
 
+## 📡 API Endpoints
+
+### Health Check
+```http
+GET /api/health
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "timestamp": "2025-10-15T00:00:00.000Z",
+  "environment": "development",
+  "database": "connected"
+}
+```
+
+### Start Symptom Check
+```http
+POST /api/start-check
+Content-Type: application/json
+
+{
+  "symptom": "severe headache with nausea"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "questions": [
+    "How long have you been experiencing this?",
+    "Rate severity from 1-10?",
+    "Any visual disturbances?"
+  ]
+}
+```
+
+### Analyze Symptoms
+```http
+POST /api/analyze
+Content-Type: application/json
+
+{
+  "fullContext": "Initial symptom: headache. Duration: 2 days. Severity: 8/10"
+}
+```
+
+### Get All Conditions
+```http
+GET /api/conditions
+```
+
+### Get Query History
+```http
+GET /api/history
+```
+
+### Get Statistics
+```http
+GET /api/stats
+```
+
+---
+
+## 🗄️ Database Schema
+
+### MedicalCondition
 ```javascript
-// vite.config.js
-export default {
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': 'http://localhost:3001'
-    }
-  }
+{
+  condition: String (unique, required),
+  symptoms: [String] (required),
+  description: String (required),
+  recommendations: [String] (required),
+  source: String (required),
+  severity: String (enum: low/medium/high/emergency),
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### QueryHistory
+```javascript
+{
+  symptom: String (required),
+  clarificationAnswers: [{
+    question: String,
+    answer: String
+  }],
+  analysisResult: Mixed,
+  isEmergency: Boolean,
+  ipAddress: String,
+  userAgent: String,
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
 ---
 
-## 🧩 Components
+## 🔒 Security
 
-### App.jsx
-Main application component managing global state
+### Implemented Features
 
-**State:**
-- `appState`: current view (initial/clarifying/analyzing/results/emergency/error)
-- `initialSymptom`: user's first symptom input
-- `questions`: AI-generated questions
-- `analysisResult`: final AI analysis
-- `errorMessage`: error display
+1. **Helmet.js** - Security headers
+   - Content Security Policy
+   - X-Frame-Options
+   - X-Content-Type-Options
 
-### SymptomInput.jsx
-Initial symptom collection form
+2. **CORS** - Cross-Origin Resource Sharing
+   - Restricted to frontend URL
+   - Credentials support
 
-**Props:** `onSubmit(symptom)`
+3. **Rate Limiting**
+   - 100 requests per 15 minutes
+   - Per IP address
 
-**Features:**
-- Textarea with character count
-- Validation (3-500 chars)
-- Medical disclaimer checkbox
-- Submit button with loading state
+4. **Input Validation**
+   - Length checks (3-500 chars for symptoms)
+   - Type validation
+   - Required field checks
 
-### ClarificationQuestions.jsx
-Dynamic question form
+5. **Input Sanitization**
+   - XSS prevention
+   - Script tag removal
+   - Event handler removal
 
-**Props:** `questions`, `onSubmit(answers)`, `onBack()`
-
-**Features:**
-- Dynamic question rendering
-- Individual text inputs
-- Back button
-- Form validation
-
-### ResultsDisplay.jsx
-Analysis results display
-
-**Props:** `result`, `onReset()`
-
-**Features:**
-- Condition cards with match percentage
-- Recommendations list
-- Urgency badge
-- Source attribution
-- Summary section
-
-### LoadingSpinner.jsx
-Loading indicator
-
-**Features:**
-- Animated CSS spinner
-- Accessible with aria-label
-
----
-
-## 🎨 Styling
-
-### Design System
-
-**Colors:**
-```css
---primary-600: #0284c7;    /* Medical blue */
---success: #10b981;         /* Green */
---error: #ef4444;           /* Red */
---warning: #f59e0b;         /* Orange */
-```
-
-**Typography:**
-```css
-font-family: 'Inter', sans-serif;
-Base size: 16px
-Line height: 1.6
-```
-
-**Spacing:**
-```css
---spacing-sm: 0.5rem;
---spacing-md: 1rem;
---spacing-lg: 1.5rem;
---spacing-xl: 2rem;
-```
-
-### Responsive Breakpoints
-
-```css
-Mobile: < 480px
-Tablet: 480px - 768px
-Desktop: > 768px
-```
-
----
-
-## 🔌 API Integration
-
-### API Utility (`utils/api.js`)
-
-```javascript
-import { apiPost } from './utils/api';
-
-// Usage
-const data = await apiPost('/api/start-check', { symptom });
-```
-
-**Features:**
-- 30-second timeout
-- Automatic error handling
-- JSON parsing
-- AbortController for cancellation
-
-### Error Handling
-
-```javascript
-try {
-  const data = await apiPost('/api/analyze', { fullContext });
-} catch (error) {
-  setErrorMessage(error.message);
-  setAppState('error');
-}
-```
+6. **Error Handling**
+   - No stack traces in production
+   - Structured error responses
+   - Proper HTTP status codes
 
 ---
 
@@ -225,138 +238,70 @@ try {
 ### Project Structure
 
 ```
-frontend/
-├── src/
-│   ├── components/
-│   │   ├── ClarificationQuestions.jsx
-│   │   ├── LoadingSpinner.jsx
-│   │   ├── ResultsDisplay.jsx
-│   │   └── SymptomInput.jsx
-│   ├── utils/
-│   │   └── api.js
-│   ├── App.jsx
-│   ├── index.css
-│   └── main.jsx
-├── public/
-├── index.html
+backend/
+├── config/
+│   ├── constants.js        # App constants
+│   └── database.js         # DB connection
+├── middleware/
+│   ├── errorHandler.js     # Error middleware
+│   ├── sanitization.js     # Input sanitization
+│   └── validation.js       # Input validation
+├── models/
+│   ├── MedicalCondition.js
+│   └── QueryHistory.js
+├── services/
+│   ├── aiService.js        # Groq AI integration
+│   └── seedDatabase.js     # DB seeding
+├── utils/
+│   ├── helpers.js          # Utility functions
+│   └── logger.js           # Structured logging
+├── .env
+├── .env.example
+├── .gitignore
 ├── package.json
-├── vite.config.js
-└── README.md
+├── README.md
+└── server.js               # Entry point
 ```
 
 ### Scripts
 
 ```bash
-npm run dev       # Start dev server (http://localhost:5173)
-npm run build     # Build for production
-npm run preview   # Preview production build
-npm run lint      # Lint code (coming soon)
+npm run dev      # Start development server with nodemon
+npm start        # Start production server
+npm run seed     # Seed database with medical data
+npm test         # Run tests (coming soon)
 ```
 
-### Build Output
+### Adding New Medical Conditions
 
-```bash
-dist/
-├── assets/
-│   ├── index-[hash].css
-│   └── index-[hash].js
-└── index.html
-```
+Edit `services/seedDatabase.js`:
 
----
-
-## 🎭 State Management
-
-### State Flow
-
-```
-User Action
-     ↓
-Update State (useState)
-     ↓
-API Call
-     ↓
-Update State with Response
-     ↓
-Render New Component
-```
-
-### State Machine
-
-```
-initial → analyzing → clarifying → analyzing → results
-            ↓                                      ↓
-         error                                  initial
-            ↓
-       emergency
-```
-
----
-
-## 📱 Responsive Design
-
-### Mobile (< 480px)
-- Single column layout
-- Full-width buttons
-- Larger touch targets
-- Simplified header
-
-### Tablet (480-768px)
-- Adjusted padding
-- Flexible containers
-- Stack form actions
-
-### Desktop (> 768px)
-- Max-width containers (900px)
-- Side-by-side buttons
-- Enhanced spacing
-
----
-
-## ♿ Accessibility
-
-### WCAG 2.1 Compliance
-
-- ✅ Keyboard navigation
-- ✅ ARIA labels
-- ✅ Focus indicators
-- ✅ Semantic HTML
-- ✅ Color contrast (4.5:1)
-- ✅ Screen reader support
-
-### Screen Reader Text
-
-```jsx
-<button aria-label="Submit symptom for analysis">
-  Analyze Symptoms
-</button>
-```
-
----
-
-## 🧪 Testing
-
-```bash
-# Coming soon
-npm test
-```
-
----
-
-## 📦 Dependencies
-
-```json
+```javascript
 {
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0"
+  condition: "Condition Name",
+  symptoms: ["symptom1", "symptom2"],
+  description: "Detailed description",
+  recommendations: ["rec1", "rec2"],
+  source: "Medical Source",
+  severity: "medium"
 }
 ```
 
-**DevDependencies:**
+Then run: `npm run seed`
+
+---
+
+## 📊 Logging
+
+Structured JSON logging for production monitoring:
+
 ```json
 {
-  "@vitejs/plugin-react": "^4.2.1",
-  "vite": "^5.0.8"
+  "level": "INFO",
+  "message": "Server started successfully",
+  "port": "3001",
+  "environment": "production",
+  "timestamp": "2025-10-15T00:00:00.000Z"
 }
 ```
 
@@ -366,58 +311,37 @@ npm test
 
 ### Common Issues
 
-**Vite Port Error**
+**MongoDB Connection Error**
 ```bash
-# Change port in vite.config.js
-server: { port: 5174 }
+# Check connection string
+# Verify IP whitelist in MongoDB Atlas
+# Ensure credentials are correct
 ```
 
-**API Connection Error**
+**Groq API Error**
 ```bash
-# Check backend is running on correct port
-# Verify VITE_API_BASE_URL in .env
+# Verify API key in .env
+# Check Groq API status
+# Review rate limits
 ```
 
-**Build Errors**
+**Port Already in Use**
 ```bash
-# Clear cache and rebuild
-rm -rf node_modules dist
-npm install
-npm run build
-```
-
----
-
-## 🚀 Deployment
-
-### Vercel
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Production
-vercel --prod
-```
-
-### Netlify
-
-```bash
-# Build command
-npm run build
-
-# Publish directory
-dist
+# Change PORT in .env
+# Or kill process: lsof -ti:3001 | xargs kill
 ```
 
 ---
 
 ## 🤝 Contributing
 
-See main [CONTRIBUTING.md](../CONTRIBUTING.md)
+See main [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+
+---
+
+## 📝 License
+
+MIT License - See [LICENSE](../LICENSE)
 
 ---
 
@@ -425,6 +349,6 @@ See main [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 [⬆ Back to Main README](../README.md)
 
-Made with ⚛️ React & ⚡ Vite
+Made with ❤️ using Node.js & Express
 
 </div>

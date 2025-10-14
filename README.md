@@ -311,23 +311,13 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ---
 
-## 👨‍💻 Author
-
-**[Your Name]**
-
-- 🌐 Portfolio: [yourportfolio.com](https://yourportfolio.com)
-- 💼 LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
-- 🐙 GitHub: [@yourusername](https://github.com/yourusername)
-- 📧 Email: your.email@example.com
-
----
 
 ## 📞 Support
 
 Need help? Reach out through:
 
-- 📧 Email: support@yourproject.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/healthcare-symptom-checker/issues)
+- 📧 Email: abhisheksingh708226@gmail.com
+- 🐛 Issues: [GitHub Issues](https://github.com/Ralblast/HealthCare-Symptom-Checker/issues)
 
 ---
 
@@ -335,7 +325,7 @@ Need help? Reach out through:
 
 ### ⭐ Star this repo if you find it helpful!
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by Abhishek
 
 [⬆ Back to Top](#-ai-healthcare-symptom-checker)
 
