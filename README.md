@@ -160,7 +160,7 @@ npm run dev
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/healthcare_db
+MONGODB_URI= mongodb+srv://<username>:<password>@cluster.mongodb.net/<database_name>
 PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
