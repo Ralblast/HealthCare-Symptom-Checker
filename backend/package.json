@@ -9,7 +9,6 @@
     "dev": "nodemon server.js",
     "seed": "node -e \"import('./services/seedDatabase.js').then(m => m.seedMedicalData())\"",
     "test": "echo 'No tests yet' && exit 0"
-
   },
   "keywords": [
     "healthcare",

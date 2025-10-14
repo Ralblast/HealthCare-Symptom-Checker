@@ -20,21 +20,33 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://health-care-symptom-checker-seven.vercel.app'
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://health-care-symptom-checker-seven.vercel.app/',  
-    'https://*.vercel.app'  
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+app.options('*', cors());
 
 app.use(express.json({ limit: '10kb' }));
 app.use(compression());
 
 app.use(sanitizeRequestBody);
-
 
 const limiter = rateLimit({
   windowMs: RATE_LIMIT.WINDOW_MS,
@@ -45,7 +57,6 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-
 app.use((req, res, next) => {
   logger.info('Incoming request', {
     method: req.method,
@@ -54,8 +65,6 @@ app.use((req, res, next) => {
   });
   next();
 });
-
-
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -67,12 +76,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-
 app.post('/api/start-check', validateSymptomInput, async (req, res, next) => {
   try {
     const symptom = req.sanitizedSymptom;
     const symptomLower = symptom.toLowerCase();
-    
     
     const isEmergency = EMERGENCY_KEYWORDS.some(keyword => 
       symptomLower.includes(keyword.toLowerCase())
@@ -95,7 +102,6 @@ app.post('/api/start-check', validateSymptomInput, async (req, res, next) => {
       });
     }
     
-    
     const questions = await generateClarificationQuestions(symptom);
     
     logger.info('Questions generated', { count: questions.length });
@@ -111,13 +117,11 @@ app.post('/api/start-check', validateSymptomInput, async (req, res, next) => {
   }
 });
 
-
 app.post('/api/analyze', validateAnalysisInput, async (req, res, next) => {
   try {
     const fullContext = req.sanitizedContext;
     const contextLower = fullContext.toLowerCase();
 
-    
     let matchingConditions = await MedicalCondition.find(
       { $text: { $search: contextLower } },
       { score: { $meta: "textScore" } }
@@ -126,7 +130,6 @@ app.post('/api/analyze', validateAnalysisInput, async (req, res, next) => {
     .limit(5)
     .lean();
 
-    
     if (matchingConditions.length === 0) {
       const allConditions = await MedicalCondition.find().lean();
       const keywords = contextLower.split(' ').filter(word => word.length > 3);
@@ -142,10 +145,8 @@ app.post('/api/analyze', validateAnalysisInput, async (req, res, next) => {
 
     logger.info('Conditions matched', { count: matchingConditions.length });
 
-    
     const analysis = await analyzeSymptoms(fullContext, matchingConditions);
 
-    
     await QueryHistory.create({
       symptom: fullContext,
       analysisResult: analysis,
@@ -167,7 +168,6 @@ app.post('/api/analyze', validateAnalysisInput, async (req, res, next) => {
   }
 });
 
-
 app.get('/api/conditions', async (req, res, next) => {
   try {
     const conditions = await MedicalCondition.find()
@@ -185,7 +185,6 @@ app.get('/api/conditions', async (req, res, next) => {
     next(error);
   }
 });
-
 
 app.get('/api/history', async (req, res, next) => {
   try {
@@ -205,7 +204,6 @@ app.get('/api/history', async (req, res, next) => {
     next(error);
   }
 });
-
 
 app.get('/api/stats', async (req, res, next) => {
   try {
@@ -230,16 +228,13 @@ app.get('/api/stats', async (req, res, next) => {
   }
 });
 
-
 app.use(notFoundHandler);
 app.use(errorHandler);
-
 
 (async () => {
   try {
     logger.info('Starting Healthcare Symptom Checker API...');
     
-  
     await connectDB();
 
     await seedMedicalData();
@@ -258,7 +253,6 @@ app.use(errorHandler);
   }
 })();
 
-
 const gracefulShutdown = (signal) => {
   logger.info(`${signal} received, closing server gracefully...`);
   process.exit(0);
@@ -266,7 +260,6 @@ const gracefulShutdown = (signal) => {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection', { reason, promise });
