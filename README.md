@@ -9,9 +9,20 @@
 [![MongoDB](https://img.shields.io/badge/mongodb-6.0+-green)](https://www.mongodb.com/)
 [![Groq AI](https://img.shields.io/badge/AI-Groq%20Llama%203.3-blue)](https://groq.com/)
 
-[Features](#features) • [Demo](#demo) • [Installation](#installation) • [Tech Stack](#tech-stack) • [API Docs](#api-documentation)
+## 🎥 Demo
+
+### Live Application
+🌐 **Try it now:** [https://health-care-symptom-checker-seven.vercel.app/](https://health-care-symptom-checker-seven.vercel.app/)
+
+### Video Demo
+📺 Coming soon! (wil add link)
+
+
+[Features](#-features) • [Demo](#-demo) • [Installation](#-quick-start) • [Tech Stack](#-tech-stack) • [API Docs](#-api-documentation)
 
 </div>
+
+---
 
 ---
 
