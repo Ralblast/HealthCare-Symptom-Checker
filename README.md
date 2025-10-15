@@ -15,7 +15,7 @@
 🌐 **Try it now:** [https://health-care-symptom-checker-seven.vercel.app/](https://health-care-symptom-checker-seven.vercel.app/)
 
 ### Video Demo
-📺 Coming soon! (wil add link)
+📺 [Youtube Link)](https://youtu.be/oUrVq3QhrOY?si=paOdEkzptLv9O2xv)
 
 
 [Features](#-features) • [Demo](#-demo) • [Installation](#-quick-start) • [Tech Stack](#-tech-stack) • [API Docs](#-api-documentation)
