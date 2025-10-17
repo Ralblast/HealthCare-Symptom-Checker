@@ -71,10 +71,7 @@ function App() {
 
       <div className="tab-navigation">
         <button
-          onClick={() => {
-            setActiveTab('checker');
-            handleReset();
-          }}
+          onClick={() => setActiveTab('checker')}
           className={`tab-button ${activeTab === 'checker' ? 'active' : ''}`}
         >
           Symptom Checker
