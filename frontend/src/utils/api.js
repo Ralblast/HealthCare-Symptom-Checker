@@ -1,13 +1,6 @@
-/**
- * API utility functions with timeout and retry logic
- */
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const DEFAULT_TIMEOUT = 30000; // 30 seconds
+const DEFAULT_TIMEOUT = 60000;
 
-/**
- * Fetch with timeout
- */
 export const fetchWithTimeout = async (url, options = {}, timeout = DEFAULT_TIMEOUT) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -22,15 +15,12 @@ export const fetchWithTimeout = async (url, options = {}, timeout = DEFAULT_TIME
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - server took too long to respond');
+      throw new Error('Request timeout - server took too long to respond. Please try again.');
     }
     throw error;
   }
 };
 
-/**
- * POST request helper
- */
 export const apiPost = async (endpoint, data) => {
   try {
     const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
@@ -55,9 +45,6 @@ export const apiPost = async (endpoint, data) => {
   }
 };
 
-/**
- * GET request helper
- */
 export const apiGet = async (endpoint) => {
   try {
     const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {

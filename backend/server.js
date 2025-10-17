@@ -4,6 +4,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import compression from 'compression';
+import timeout from 'connect-timeout';
 
 import connectDB from './config/database.js';
 import { HTTP_STATUS, ERROR_MESSAGES, EMERGENCY_KEYWORDS, RATE_LIMIT } from './config/constants.js';
@@ -66,107 +67,132 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true,
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    database: 'connected'
-  });
+function haltOnTimedout(req, res, next) {
+  if (!req.timedout) next();
+}
+
+app.get('/api/health', async (req, res) => {
+  try {
+    await MedicalCondition.findOne().lean().exec();
+    
+    res.json({ 
+      success: true,
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'connected'
+    });
+  } catch (error) {
+    logger.error('Health check failed', error);
+    res.status(503).json({
+      success: false,
+      status: 'unhealthy',
+      error: 'Database connection failed'
+    });
+  }
 });
 
-app.post('/api/start-check', validateSymptomInput, async (req, res, next) => {
-  try {
-    const symptom = req.sanitizedSymptom;
-    const symptomLower = symptom.toLowerCase();
-    
-    const isEmergency = EMERGENCY_KEYWORDS.some(keyword => 
-      symptomLower.includes(keyword.toLowerCase())
-    );
-    
-    if (isEmergency) {
-      logger.warn('Emergency symptoms detected', { symptom: symptomLower });
+app.post('/api/start-check', 
+  timeout('60s'),
+  haltOnTimedout,
+  validateSymptomInput, 
+  async (req, res, next) => {
+    try {
+      const symptom = req.sanitizedSymptom;
+      const symptomLower = symptom.toLowerCase();
       
+      const isEmergency = EMERGENCY_KEYWORDS.some(keyword => 
+        symptomLower.includes(keyword.toLowerCase())
+      );
+      
+      if (isEmergency) {
+        logger.warn('Emergency symptoms detected', { symptom: symptomLower });
+        
+        await QueryHistory.create({
+          symptom: symptomLower,
+          isEmergency: true,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent')
+        });
+
+        return res.json({ 
+          success: true,
+          isEmergency: true,
+          message: ERROR_MESSAGES.EMERGENCY_DETECTED
+        });
+      }
+      
+      const questions = await generateClarificationQuestions(symptom);
+      
+      logger.info('Questions generated', { count: questions.length });
+      
+      res.json({ 
+        success: true,
+        questions 
+      });
+
+    } catch (error) {
+      logger.error('Error in start-check', error);
+      next(error);
+    }
+  }
+);
+
+app.post('/api/analyze', 
+  timeout('60s'),
+  haltOnTimedout,
+  validateAnalysisInput, 
+  async (req, res, next) => {
+    try {
+      const fullContext = req.sanitizedContext;
+      const contextLower = fullContext.toLowerCase();
+
+      let matchingConditions = await MedicalCondition.find(
+        { $text: { $search: contextLower } },
+        { score: { $meta: "textScore" } }
+      )
+      .sort({ score: { $meta: "textScore" } })
+      .limit(5)
+      .lean();
+
+      if (matchingConditions.length === 0) {
+        const allConditions = await MedicalCondition.find().lean();
+        const keywords = contextLower.split(' ').filter(word => word.length > 3);
+        
+        matchingConditions = allConditions.filter(condition => 
+          condition.symptoms.some(symptom => 
+            keywords.some(keyword => 
+              symptom.includes(keyword) || keyword.includes(symptom)
+            )
+          )
+        );
+      }
+
+      logger.info('Conditions matched', { count: matchingConditions.length });
+
+      const analysis = await analyzeSymptoms(fullContext, matchingConditions);
+
       await QueryHistory.create({
-        symptom: symptomLower,
-        isEmergency: true,
+        symptom: fullContext,
+        analysisResult: analysis,
+        isEmergency: false,
         ipAddress: req.ip,
         userAgent: req.get('user-agent')
       });
 
-      return res.json({ 
+      logger.info('Analysis completed successfully');
+
+      res.json({
         success: true,
-        isEmergency: true,
-        message: ERROR_MESSAGES.EMERGENCY_DETECTED
+        data: analysis
       });
+
+    } catch (error) {
+      logger.error('Error in analyze', error);
+      next(error);
     }
-    
-    const questions = await generateClarificationQuestions(symptom);
-    
-    logger.info('Questions generated', { count: questions.length });
-    
-    res.json({ 
-      success: true,
-      questions 
-    });
-
-  } catch (error) {
-    logger.error('Error in start-check', error);
-    next(error);
   }
-});
-
-app.post('/api/analyze', validateAnalysisInput, async (req, res, next) => {
-  try {
-    const fullContext = req.sanitizedContext;
-    const contextLower = fullContext.toLowerCase();
-
-    let matchingConditions = await MedicalCondition.find(
-      { $text: { $search: contextLower } },
-      { score: { $meta: "textScore" } }
-    )
-    .sort({ score: { $meta: "textScore" } })
-    .limit(5)
-    .lean();
-
-    if (matchingConditions.length === 0) {
-      const allConditions = await MedicalCondition.find().lean();
-      const keywords = contextLower.split(' ').filter(word => word.length > 3);
-      
-      matchingConditions = allConditions.filter(condition => 
-        condition.symptoms.some(symptom => 
-          keywords.some(keyword => 
-            symptom.includes(keyword) || keyword.includes(symptom)
-          )
-        )
-      );
-    }
-
-    logger.info('Conditions matched', { count: matchingConditions.length });
-
-    const analysis = await analyzeSymptoms(fullContext, matchingConditions);
-
-    await QueryHistory.create({
-      symptom: fullContext,
-      analysisResult: analysis,
-      isEmergency: false,
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
-
-    logger.info('Analysis completed successfully');
-
-    res.json({
-      success: true,
-      data: analysis
-    });
-
-  } catch (error) {
-    logger.error('Error in analyze', error);
-    next(error);
-  }
-});
+);
 
 app.get('/api/conditions', async (req, res, next) => {
   try {
