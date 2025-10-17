@@ -3,9 +3,11 @@ import SymptomInput from './components/SymptomInput';
 import ClarificationQuestions from './components/ClarificationQuestions';
 import ResultsDisplay from './components/ResultsDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
+import History from './components/History';
 import { apiPost } from './utils/api';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('checker');
   const [appState, setAppState] = useState('initial');
   const [initialSymptom, setInitialSymptom] = useState('');
   const [questions, setQuestions] = useState([]);
@@ -66,51 +68,75 @@ function App() {
           <p className="app-subtitle">AI-Powered Medical Analysis Assistant</p>
         </div>
       </header>
+
+      <div className="tab-navigation">
+        <button
+          onClick={() => {
+            setActiveTab('checker');
+            handleReset();
+          }}
+          className={`tab-button ${activeTab === 'checker' ? 'active' : ''}`}
+        >
+          Symptom Checker
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+        >
+          History
+        </button>
+      </div>
       
       <main className="app-main">
-        {appState === 'initial' && (
-          <SymptomInput onSubmit={handleSymptomSubmit} />
-        )}
-        
-        {appState === 'clarifying' && (
-          <ClarificationQuestions 
-            questions={questions} 
-            onSubmit={handleAnswersSubmit}
-            onBack={handleReset}
-          />
-        )}
-        
-        {appState === 'analyzing' && (
-          <div className="text-center">
-            <LoadingSpinner />
-            <p className="loading-text">Analyzing your symptoms...</p>
-            <p className="loading-subtext">This may take a few moments</p>
-          </div>
-        )}
-        
-        {appState === 'results' && (
-          <ResultsDisplay result={analysisResult} onReset={handleReset} />
-        )}
-        
-        {appState === 'emergency' && (
-          <div className="emergency-warning">
-            <div className="emergency-icon">🚨</div>
-            <h2>Emergency Detected</h2>
-            <p className="emergency-message">{errorMessage}</p>
-            <div className="emergency-actions">
-              <a href="tel:911" className="btn-emergency">Call Emergency</a>
-              <button onClick={handleReset} className="btn-secondary">Go Back</button>
-            </div>
-          </div>
-        )}
-        
-        {appState === 'error' && (
-          <div className="error-container">
-            <div className="error-icon">⚠️</div>
-            <h2>Something Went Wrong</h2>
-            <p className="error-message">{errorMessage}</p>
-            <button onClick={handleReset} className="btn-primary">Try Again</button>
-          </div>
+        {activeTab === 'history' ? (
+          <History />
+        ) : (
+          <>
+            {appState === 'initial' && (
+              <SymptomInput onSubmit={handleSymptomSubmit} />
+            )}
+            
+            {appState === 'clarifying' && (
+              <ClarificationQuestions 
+                questions={questions} 
+                onSubmit={handleAnswersSubmit}
+                onBack={handleReset}
+              />
+            )}
+            
+            {appState === 'analyzing' && (
+              <div className="text-center">
+                <LoadingSpinner />
+                <p className="loading-text">Analyzing your symptoms...</p>
+                <p className="loading-subtext">This may take a few moments</p>
+              </div>
+            )}
+            
+            {appState === 'results' && (
+              <ResultsDisplay result={analysisResult} onReset={handleReset} />
+            )}
+            
+            {appState === 'emergency' && (
+              <div className="emergency-warning">
+                <div className="emergency-icon">🚨</div>
+                <h2>Emergency Detected</h2>
+                <p className="emergency-message">{errorMessage}</p>
+                <div className="emergency-actions">
+                  <a href="tel:911" className="btn-emergency">Call Emergency</a>
+                  <button onClick={handleReset} className="btn-secondary">Go Back</button>
+                </div>
+              </div>
+            )}
+            
+            {appState === 'error' && (
+              <div className="error-container">
+                <div className="error-icon">⚠️</div>
+                <h2>Something Went Wrong</h2>
+                <p className="error-message">{errorMessage}</p>
+                <button onClick={handleReset} className="btn-primary">Try Again</button>
+              </div>
+            )}
+          </>
         )}
       </main>
       
