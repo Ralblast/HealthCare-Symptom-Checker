@@ -7,6 +7,11 @@ obvious emergencies before ever calling the model.
 
 > Educational project — not a medical device and not a substitute for a doctor.
 
+## Demo
+
+- **Live app:** https://health-care-symptom-checker-seven.vercel.app/
+- **Video walkthrough:** https://youtu.be/OTdIQSQiP4Y?si=cGoAlNTmteq6NR__
+
 ## What it does
 
 1. You describe a symptom. Red-flag phrases (chest pain, stroke, etc.) short-circuit
