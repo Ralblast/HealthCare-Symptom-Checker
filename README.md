@@ -1,344 +1,93 @@
-<div align="center">
+# Healthcare Symptom Checker
 
-# 🏥 AI Healthcare Symptom Checker
+A small full-stack app that takes a free-text symptom description, asks a couple
+of AI-generated follow-up questions, and returns possible conditions (grounded
+on a curated medical knowledge base) with a triage urgency level. It also flags
+obvious emergencies before ever calling the model.
 
-### Intelligent Medical Analysis Platform
+> Educational project — not a medical device and not a substitute for a doctor.
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/mongodb-6.0+-green)](https://www.mongodb.com/)
-[![Groq AI](https://img.shields.io/badge/AI-Groq%20Llama%203.3-blue)](https://groq.com/)
+## What it does
 
-## 🎥 Demo
+1. You describe a symptom. Red-flag phrases (chest pain, stroke, etc.) short-circuit
+   straight to an emergency notice.
+2. The API asks three clarifying questions (duration, severity, related symptoms).
+3. Your answers are matched against a MongoDB knowledge base, and Llama 3.3 (via
+   Groq) writes up the most likely conditions, reasoning, recommendations and an
+   urgency level — only from conditions in the knowledge base.
+4. An Insights tab shows anonymised aggregate stats.
 
-### Live Application
-🌐 **Try it now:** [https://health-care-symptom-checker-seven.vercel.app/](https://health-care-symptom-checker-seven.vercel.app/)
+## Tech stack
 
-### Video Demo
-📺 [Youtube Link)](https://youtu.be/oUrVq3QhrOY?si=paOdEkzptLv9O2xv)
+| Layer    | Tech                                                            |
+| -------- | --------------------------------------------------------------- |
+| Frontend | React 18, Vite, plain CSS (JavaScript / JSX)                    |
+| Backend  | Node, Express 4, TypeScript (ESM)                              |
+| Database | MongoDB + Mongoose                                              |
+| AI       | Groq SDK — `llama-3.3-70b-versatile`                            |
+| Tooling  | Winston, Vitest + Supertest, ESLint                            |
 
+## Architecture
 
-[Features](#-features) • [Demo](#-demo) • [Installation](#-quick-start) • [Tech Stack](#-tech-stack) • [API Docs](#-api-documentation)
+```
+React (Vite)  ──fetch──►  Express API  ──►  MongoDB (conditions + history)
+                              │
+                              └──►  Groq (Llama 3.3) for questions + analysis
 
-</div>
-
----
-
----
-
-## 🌟 Overview
-
-An AI-powered healthcare symptom analysis platform that helps users understand potential medical conditions based on their symptoms. Built with the MERN stack and powered by Groq's Llama 3.3 (70B) model.
-
-> **⚠️ Medical Disclaimer:** This is an educational tool designed for learning purposes. It does not replace professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for medical concerns.
-
----
-
-## ✨ Features
-
-<table>
-<tr>
-<td width="50%">
-
-### 🤖 AI-Powered
-- Advanced symptom analysis using Llama 3.3
-- Dynamic clarification questions
-- Context-aware recommendations
-- Grounded in medical knowledge base
-
-</td>
-<td width="50%">
-
-### 🔒 Production-Ready
-- Enterprise-grade security (Helmet, CORS)
-- Rate limiting & input sanitization
-- Structured JSON logging
-- Comprehensive error handling
-
-</td>
-</tr>
-<tr>
-<td>
-
-### 🚨 Safety First
-- Emergency keyword detection
-- Urgency level classification
-- Medical disclaimers at every step
-- Source attribution for conditions
-
-</td>
-<td>
-
-### 📊 Data-Driven
-- MongoDB knowledge base (6+ conditions)
-- Query history tracking
-- Statistical insights
-- RESTful API design
-
-</td>
-</tr>
-</table>
-
----
-
-## 🛠️ Tech Stack
-
-<table>
-<tr>
-<td align="center" width="96">
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="48" height="48" alt="React" />
-<br>React
-</td>
-<td align="center" width="96">
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="48" height="48" alt="Node.js" />
-<br>Node.js
-</td>
-<td align="center" width="96">
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" width="48" height="48" alt="Express" />
-<br>Express
-</td>
-<td align="center" width="96">
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg" width="48" height="48" alt="MongoDB" />
-<br>MongoDB
-</td>
-<td align="center" width="96">
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="48" height="48" alt="JavaScript" />
-<br>JavaScript
-</td>
-</tr>
-</table>
-
-**Frontend:** React 18, Vite, Custom CSS  
-**Backend:** Node.js, Express.js, Mongoose ODM  
-**Database:** MongoDB Atlas  
-**AI/ML:** Groq AI (Llama 3.3 70B)  
-**Security:** Helmet, CORS, Rate Limiting, Input Sanitization  
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-```bash
-node >= 18.0.0
-npm >= 9.0.0
-MongoDB Atlas account (free)
-Groq API key (free)
+API:  routes ─► controllers ─► services ─► models
 ```
 
-### Installation
+The backend keeps `app.ts` (wiring) separate from `server.ts` (boot) so tests
+can exercise the app without a database connection.
+
+## Repo layout
+
+```
+backend/    TypeScript Express API  (see backend/README.md)
+frontend/   React + Vite SPA         (see frontend/README.md)
+docs/       design spec + implementation plan
+```
+
+## Running it locally
+
+You'll need Node 18+, a MongoDB connection string, and a Groq API key.
+
+**Backend**
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/healthcare-symptom-checker.git
-cd healthcare-symptom-checker
-
-# Install backend dependencies
 cd backend
 npm install
-
-# Configure environment variables
-cp .env.example .env
-# Edit .env with your credentials
-
-# Start backend server
-npm run dev
-
-# In new terminal - Install frontend dependencies
-cd ../frontend
-npm install
-
-# Start frontend development server
-npm run dev
+cp .env.example .env      # add GROQ_API_KEY and MONGODB_URI
+npm run dev               # http://localhost:3001
 ```
 
-### Environment Setup
-
-<details>
-<summary><b>Backend .env configuration</b></summary>
-
-```env
-GROQ_API_KEY=your_groq_api_key_here
-MONGODB_URI= mongodb+srv://<username>:<password>@cluster.mongodb.net/<database_name>
-PORT=3001
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-```
-
-</details>
-
-<details>
-<summary><b>Frontend .env configuration (optional)</b></summary>
-
-```env
-VITE_API_BASE_URL=http://localhost:3001
-```
-
-</details>
-
----
-
-## 📖 Usage
-
-1. **Enter Symptoms** - Describe what you're experiencing
-2. **Answer Questions** - AI asks 3 clarifying questions
-3. **View Analysis** - Get probable conditions with recommendations
-
-### Example Flow
-
-```
-Input: "severe headache on one side with light sensitivity"
-
-AI Questions:
-├─ How long have you experienced this?
-├─ Rate severity (1-10)?
-└─ Any nausea or visual disturbances?
-
-Output:
-├─ Condition: Migraine (85% match)
-├─ Urgency: Medium
-└─ Recommendations: Rest in dark room, medication, avoid triggers
-```
-
----
-
-## 📚 API Documentation
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/start-check` | Initial symptom submission |
-| `POST` | `/api/analyze` | Full symptom analysis |
-| `GET` | `/api/conditions` | List all conditions |
-| `GET` | `/api/history` | Query history |
-| `GET` | `/api/stats` | Application statistics |
-
-<details>
-<summary><b>Example API Request</b></summary>
+**Frontend** (in a second terminal)
 
 ```bash
-curl -X POST http://localhost:3001/api/start-check \
-  -H "Content-Type: application/json" \
-  -d '{"symptom": "persistent cough and fever"}'
+cd frontend
+npm install
+npm run dev               # http://localhost:5173
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "questions": [
-    "How long have you had these symptoms?",
-    "What is your temperature reading?",
-    "Do you have difficulty breathing?"
-  ]
-}
+The backend seeds 8 conditions into MongoDB on first boot.
+
+## Testing
+
+```bash
+cd backend && npm test          # unit + API wiring tests
+cd backend && npm run typecheck # tsc --noEmit
 ```
 
-</details>
+## Deploying
 
----
+- **Backend:** `npm run build` (tsc → `dist/`) then `npm start`. Set `NODE_ENV=production`
+  and the env vars from `.env.example` on the host.
+- **Frontend:** `npm run build` produces a static `dist/` (deployed to Vercel).
+  Set `VITE_API_BASE_URL` to the deployed API URL.
 
-## 🏗️ Project Structure
+## Known limitations / future work
 
-```
-healthcare-symptom-checker/
-├── backend/                 # Express.js server
-│   ├── config/             # Configuration files
-│   ├── middleware/         # Custom middleware
-│   ├── models/             # Mongoose schemas
-│   ├── services/           # Business logic
-│   ├── utils/              # Helper functions
-│   └── server.js           # Entry point
-│
-├── frontend/               # React application
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── utils/         # Frontend utilities
-│   │   ├── App.jsx        # Main component
-│   │   └── index.css      # Global styles
-│   └── index.html
-│
-├── .gitignore
-└── README.md
-```
-
----
-
-## 🔐 Security
-
-### Implemented Measures
-
-- ✅ **Input Validation** - All user inputs validated
-- ✅ **Sanitization** - XSS attack prevention
-- ✅ **Rate Limiting** - 100 requests per 15 minutes
-- ✅ **Security Headers** - Helmet.js configuration
-- ✅ **CORS** - Restricted origins
-- ✅ **Environment Variables** - No secrets in code
-
-### Compliance
-
-- OWASP Top 10 addressed
-- GDPR considerations for health data
-- Medical disclaimer on every page
-
----
-
-## 📈 Performance
-
-- ⚡ API Response: < 2s average
-- 🚀 AI Inference: < 5s with Groq
-- 💾 Database Queries: < 100ms
-- 📱 Lighthouse Score: 95+
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Medical Data Sources:** CDC, NHS, Mayo Clinic, NIH
-- **AI Provider:** Groq for fast LLM inference
-- **Icons:** Emoji icons for clean UI
-- **Inspiration:** Modern healthcare technology trends
-- **CHAT GPT :** I used for generating  css styles
-
----
-
-
-## 📞 Support
-
-Need help? Reach out through:
-
-- 📧 Email: abhisheksingh708226@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/Ralblast/HealthCare-Symptom-Checker/issues)
-
----
-
-<div align="center">
-
-### ⭐ Star this repo if you find it helpful!
-
-Made with ❤️ by Abhishek
-
-[⬆ Back to Top](#-ai-healthcare-symptom-checker)
-
-</div>
+- Knowledge base is a small seeded set (8 conditions) — fine for a demo, not real coverage.
+- No user accounts; the API is public and rate-limited (100 req / 15 min per IP).
+- The AI is grounded on the DB but can still be wrong — hence the disclaimers everywhere.
+- Would like to add: an admin view for conditions, request IDs in logs, and an E2E test.
