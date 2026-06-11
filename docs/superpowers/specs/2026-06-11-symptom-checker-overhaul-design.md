@@ -63,6 +63,16 @@ Flow: **routes → controllers → services → models.** Deliberately *not* ove
 - "Insights" tab: polished stat cards, honest naming, correct model label.
 - Working ESLint (fix missing-plugin problem).
 
+## Visual direction (frontend-design)
+
+Grounded as a real clinical triage tool, not a marketing page.
+
+- **Palette:** Canvas `#F6F8FA` · Surface `#FFFFFF` · Text `#1E2A32` · Muted `#5B6B7B` · Hairline `#E3E8EE` · Primary teal `#0F6E6A` (hover `#0B5854`). Urgency scale: low `#2F9E6F`, medium `#C77700`, high `#D64533`, emergency `#B3261E`.
+- **Type:** **Public Sans** (UI/headings — civic/public-health, deliberately not Inter); **IBM Plex Mono** for data only (match %, stat values, step numbers → "clinical readout").
+- **Signature:** a triage urgency meter (Low·Medium·High) filling the active semantic color, percentages in mono. One risk: monospace for all metrics, justified by medical-instrument vernacular.
+- **Layout:** centered single-column intake flow with an honest 3-step indicator (1 Describe → 2 Clarify → 3 Results); slim top bar with a monoline medical cross + Checker/Insights tabs.
+- Quality floor: responsive to mobile, visible keyboard focus, `prefers-reduced-motion` respected, `aria-live` on status/alerts.
+
 ## Data flow (unchanged behavior, cleaner plumbing)
 
 1. `POST /api/start-check` → emergency keyword scan → if emergency, log + return; else AI generates 3 clarifying questions.
