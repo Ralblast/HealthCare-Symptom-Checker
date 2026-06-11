@@ -23,4 +23,6 @@ export const env = {
   groqApiKey: requireEnv('GROQ_API_KEY'),
   logLevel: process.env.LOG_LEVEL ?? 'info',
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  // how often to ping the DB so a free Atlas cluster doesn't pause (hours, 0 = off)
+  keepAliveHours: Number(process.env.KEEP_ALIVE_HOURS ?? 24),
 };
