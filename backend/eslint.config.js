@@ -9,6 +9,8 @@ export default tseslint.config(
     rules: {
       // we throw `unknown` in a couple of places and narrow it ourselves
       '@typescript-eslint/no-explicit-any': 'off',
+      // express error handlers need the 4th `next` arg even when unused
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
 );
