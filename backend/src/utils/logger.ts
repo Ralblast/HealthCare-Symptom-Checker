@@ -23,12 +23,13 @@ export const logger = winston.createLogger({
 if (env.isTest) {
   // Keep test output clean.
   logger.add(new winston.transports.Console({ silent: true }));
+} else if (env.isProd) {
+  // Hosts like Render capture stdout, so log structured JSON there.
+  logger.add(new winston.transports.Console());
 } else {
+  logger.add(new winston.transports.Console({ format: devFormat }));
   logger.add(new winston.transports.File({ filename: 'logs/error.log', level: 'error' }));
   logger.add(new winston.transports.File({ filename: 'logs/combined.log' }));
-  if (!env.isProd) {
-    logger.add(new winston.transports.Console({ format: devFormat }));
-  }
 }
 
 export default logger;
