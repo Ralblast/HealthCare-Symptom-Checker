@@ -2,68 +2,76 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 
 const ClarificationQuestions = ({ questions, onSubmit, onBack }) => {
-  const [answers, setAnswers] = useState(Array(questions.length).fill(''));
+  const [answers, setAnswers] = useState(() => Array(questions.length).fill(''));
   const [error, setError] = useState('');
-  
-  const handleAnswerChange = (index, value) => {
-    const newAnswers = [...answers];
-    newAnswers[index] = value;
-    setAnswers(newAnswers);
+
+  const updateAnswer = (index, value) => {
+    setAnswers((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
     setError('');
   };
-  
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (answers.some(a => !a.trim())) {
-      setError('Please answer all questions');
+
+    if (answers.some((a) => !a.trim())) {
+      setError('Please answer all the questions so the analysis is accurate.');
       return;
     }
-    
-    const formatted = answers.map((ans, i) => `${questions[i]}: ${ans}`);
-    onSubmit(formatted);
+
+    onSubmit(answers.map((answer, i) => `${questions[i]}: ${answer}`));
   };
-  
+
   return (
-    <div className="clarification-container">
-      <h2>Additional Information</h2>
-      <p>Please answer these questions for better analysis:</p>
-      
-      <form onSubmit={handleSubmit} className="clarification-form">
-        {questions.map((question, index) => (
-          <div key={index} className="form-group">
-            <label>{index + 1}. {question}</label>
+    <section className="card">
+      <h2 className="card__title">A few quick questions</h2>
+      <p className="card__hint">These help narrow down what might be going on.</p>
+
+      <form className="form" onSubmit={handleSubmit} noValidate>
+        {questions.map((question, i) => (
+          <div className="field" key={i}>
+            <label className="field__label" htmlFor={`q${i}`}>
+              <span className="q-num mono">{i + 1}</span> {question}
+            </label>
             <textarea
-              className="form-textarea"
-              value={answers[index]}
-              onChange={(e) => handleAnswerChange(index, e.target.value)}
-              placeholder="Your answer..."
-              rows="3"
+              id={`q${i}`}
+              className="textarea"
+              value={answers[i]}
+              onChange={(e) => updateAnswer(i, e.target.value)}
+              placeholder="Your answer"
+              rows="2"
             />
           </div>
         ))}
-        
-        {error && <p className="error-message">{error}</p>}
-        
-        <div className="form-actions">
+
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <div className="btn-row">
           {onBack && (
-            <button type="button" onClick={onBack} className="btn-secondary">
+            <button type="button" className="btn btn--ghost" onClick={onBack}>
               Back
             </button>
           )}
-          <button type="submit" className="btn-primary">
+          <button type="submit" className="btn btn--primary">
             Continue
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 };
 
 ClarificationQuestions.propTypes = {
   questions: PropTypes.arrayOf(PropTypes.string).isRequired,
   onSubmit: PropTypes.func.isRequired,
-  onBack: PropTypes.func
+  onBack: PropTypes.func,
 };
 
 export default ClarificationQuestions;

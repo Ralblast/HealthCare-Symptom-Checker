@@ -1,9 +1,7 @@
-const LoadingSpinner = () => {
-  return (
-    <div className="loading-spinner">
-      <div className="spinner"></div>
-    </div>
-  );
-};
+const LoadingSpinner = () => (
+  <div className="spinner" role="status" aria-label="Loading">
+    <span className="spinner__ring" />
+  </div>
+);
 
 export default LoadingSpinner;
