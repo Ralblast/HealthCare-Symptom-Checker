@@ -3,147 +3,121 @@ import SymptomInput from './components/SymptomInput';
 import ClarificationQuestions from './components/ClarificationQuestions';
 import ResultsDisplay from './components/ResultsDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
-import History from './components/History';
-import { apiPost } from './utils/api';
+import StepIndicator from './components/StepIndicator';
+import Insights from './components/Insights';
+import { useSymptomChecker } from './hooks/useSymptomChecker';
+
+// Which step the indicator highlights for each state.
+const STEP_FOR_STATE = { initial: 1, clarifying: 2, analyzing: 2, results: 3 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState('checker');
-  const [appState, setAppState] = useState('initial');
-  const [initialSymptom, setInitialSymptom] = useState('');
-  const [questions, setQuestions] = useState([]);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  
-  const handleSymptomSubmit = async (symptom) => {
-    setInitialSymptom(symptom);
-    setAppState('analyzing');
-    setErrorMessage('');
-    
-    try {
-      const data = await apiPost('/api/start-check', { symptom });
-      
-      if (data.isEmergency) {
-        setAppState('emergency');
-        setErrorMessage(data.message);
-      } else if (data.questions) {
-        setQuestions(data.questions);
-        setAppState('clarifying');
-      } else {
-        throw new Error('Invalid response from server');
-      }
-    } catch (error) {
-      setErrorMessage(error.message || 'Failed to connect to server. Please try again.');
-      setAppState('error');
-    }
-  };
-  
-  const handleAnswersSubmit = async (answers) => {
-    setAppState('analyzing');
-    const fullContext = `Initial symptom: ${initialSymptom}. Additional details: ${answers.join(' ')}`;
-    
-    try {
-      const data = await apiPost('/api/analyze', { fullContext });
-      
-      setAnalysisResult(data.data);
-      setAppState('results');
-    } catch (error) {
-      setErrorMessage(error.message || 'Failed to analyze symptoms. Please try again.');
-      setAppState('error');
-    }
-  };
-  
-  const handleReset = () => {
-    setAppState('initial');
-    setInitialSymptom('');
-    setQuestions([]);
-    setAnalysisResult(null);
-    setErrorMessage('');
-  };
-  
+  const [tab, setTab] = useState('checker');
+  const { state, questions, result, errorMessage, submitSymptom, submitAnswers, reset } =
+    useSymptomChecker();
+
+  const showStepper = tab === 'checker' && STEP_FOR_STATE[state];
+
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <div className="header-content">
-          <h1 className="app-title">🏥 Healthcare Symptom Checker</h1>
-          <p className="app-subtitle">AI-Powered Medical Analysis Assistant</p>
+    <div className="app">
+      <header className="topbar">
+        <div className="topbar__inner">
+          <span className="brand">
+            <span className="brand__mark" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M10 4v12M4 10h12"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <span className="brand__name">Symptom Checker</span>
+          </span>
+
+          <nav className="tabs" aria-label="Sections">
+            <button
+              className={`tab ${tab === 'checker' ? 'is-active' : ''}`}
+              onClick={() => setTab('checker')}
+            >
+              Checker
+            </button>
+            <button
+              className={`tab ${tab === 'insights' ? 'is-active' : ''}`}
+              onClick={() => setTab('insights')}
+            >
+              Insights
+            </button>
+          </nav>
         </div>
       </header>
 
-      <div className="tab-navigation">
-        <button
-          onClick={() => setActiveTab('checker')}
-          className={`tab-button ${activeTab === 'checker' ? 'active' : ''}`}
-        >
-          Symptom Checker
-        </button>
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
-        >
-          History
-        </button>
-      </div>
-      
-      <main className="app-main">
-        {activeTab === 'history' ? (
-          <History />
-        ) : (
-          <>
-            {appState === 'initial' && (
-              <SymptomInput onSubmit={handleSymptomSubmit} />
-            )}
-            
-            {appState === 'clarifying' && (
-              <ClarificationQuestions 
-                questions={questions} 
-                onSubmit={handleAnswersSubmit}
-                onBack={handleReset}
-              />
-            )}
-            
-            {appState === 'analyzing' && (
-              <div className="text-center">
-                <LoadingSpinner />
-                <p className="loading-text">Analyzing your symptoms...</p>
-                <p className="loading-subtext">This may take a few moments</p>
-              </div>
-            )}
-            
-            {appState === 'results' && (
-              <ResultsDisplay result={analysisResult} onReset={handleReset} />
-            )}
-            
-            {appState === 'emergency' && (
-              <div className="emergency-warning">
-                <div className="emergency-icon">🚨</div>
-                <h2>Emergency Detected</h2>
-                <p className="emergency-message">{errorMessage}</p>
-                <div className="emergency-actions">
-                  <a href="tel:911" className="btn-emergency">Call Emergency</a>
-                  <button onClick={handleReset} className="btn-secondary">Go Back</button>
-                </div>
-              </div>
-            )}
-            
-            {appState === 'error' && (
-              <div className="error-container">
-                <div className="error-icon">⚠️</div>
-                <h2>Something Went Wrong</h2>
-                <p className="error-message">{errorMessage}</p>
-                <button onClick={handleReset} className="btn-primary">Try Again</button>
-              </div>
-            )}
-          </>
-        )}
+      <main className="page">
+        <div className="container">
+          {tab === 'insights' ? (
+            <Insights />
+          ) : (
+            <>
+              {showStepper && <StepIndicator current={STEP_FOR_STATE[state]} />}
+
+              {state === 'initial' && <SymptomInput onSubmit={submitSymptom} />}
+
+              {state === 'clarifying' && (
+                <ClarificationQuestions
+                  questions={questions}
+                  onSubmit={submitAnswers}
+                  onBack={reset}
+                />
+              )}
+
+              {state === 'analyzing' && (
+                <section className="card card--center" aria-live="polite">
+                  <LoadingSpinner />
+                  <p className="loading-title">Reviewing your symptoms…</p>
+                  <p className="loading-sub">This usually takes a few seconds.</p>
+                </section>
+              )}
+
+              {state === 'results' && <ResultsDisplay result={result} onReset={reset} />}
+
+              {state === 'emergency' && (
+                <section className="card emergency" role="alert">
+                  <span className="emergency__tag">Possible emergency</span>
+                  <p className="emergency__text">{errorMessage}</p>
+                  <div className="btn-row">
+                    <a href="tel:112" className="btn btn--danger">
+                      Call emergency services
+                    </a>
+                    <button className="btn btn--ghost" onClick={reset}>
+                      Start over
+                    </button>
+                  </div>
+                  <p className="hint">
+                    If this is life-threatening, call your local emergency number now.
+                  </p>
+                </section>
+              )}
+
+              {state === 'error' && (
+                <section className="card state-error" role="alert">
+                  <h2 className="card__title">Something went wrong</h2>
+                  <p>{errorMessage}</p>
+                  <button className="btn btn--primary" onClick={reset}>
+                    Try again
+                  </button>
+                </section>
+              )}
+            </>
+          )}
+        </div>
       </main>
-      
-      <footer className="app-footer">
-        <div className="footer-content">
-          <p className="disclaimer">
-            <strong>⚠️ Medical Disclaimer:</strong> This tool provides educational information only and is not a substitute for professional medical advice, diagnosis, or treatment.
-          </p>
-          <p className="footer-info">
-            Always seek the advice of your physician or other qualified health provider with any questions about your medical condition.
+
+      <footer className="footer">
+        <div className="container">
+          <p>
+            <strong>Medical disclaimer.</strong> This tool gives educational information only and is
+            not a substitute for professional diagnosis or treatment. Always consult a qualified
+            clinician about your health.
           </p>
         </div>
       </footer>
